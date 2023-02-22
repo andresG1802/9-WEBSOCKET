@@ -1,7 +1,10 @@
 
 const lblEscritorio = document.querySelector('h1');
-const btnAtender = document.querySelector('button');
+const btnAtender    = document.querySelector('button');
+const lblTicket     = document.querySelector('small');
+const divAlerta     = document.querySelector('.alert');
 
+const lblPendientes = document.querySelector('#lblPendientes')
 
 const searchParams = new URLSearchParams(window.location.search);
 
@@ -14,30 +17,51 @@ if(!searchParams.has('escritorio'))
 const escritorio = searchParams.get('escritorio');
 lblEscritorio.innerText=escritorio;
 
+divAlerta.style.display = 'none';
 const socket = io();
 
 socket.on('connect', () => {
     // console.log('Conectado');
 
-   btnCrear.disabled = false;
+   btnAtender.disabled = false;
 
 });
 
 socket.on('disconnect', () => {
     // console.log('Desconectado del servidor');
 
-    btnCrear.disabled = true
+    btnAtender.disabled = true
 });
 
-socket.on('ultimo-ticket',(ultimo)=>{
+//El on sirve para escuchar lo que esta en el controller
+socket.on('tickets-pendiestes',(pendientes)=>{
+    if(pendientes===0)
+    {
+        lblPendientes.style.display = 'none';
+    }
+    else
+    {
+        lblPendientes.style.display = '';
+        lblPendientes.innerText = pendientes;
+    }
     
-    lblNuevotTicket.innerHTML = 'Ticket '+ ultimo;
+    
 });
 
-btnCrear.addEventListener( 'click', () => {
+btnAtender.addEventListener('click',()=>{
 
-    socket.emit('siguiente-ticket', null, ( ticket) => {
-        lblNuevotTicket.innerHTML = ticket;
+    socket.emit('atender-ticket',{escritorio},({ok,ticket,msg})=>{
+        if(!ok)
+        {
+            lblTicket.innerHTML = 'Nadie';
+            return divAlerta.style.display = '';
+        }
+        
+        lblTicket.innerText = 'Ticket ' + ticket.numero;
+
     });
 
 });
+
+
+
